@@ -37,7 +37,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public TokenResponse loginUser(UserRequest userRequest) {
-        // Buscamos el usuario por email (en BBDD)
+        /*// Buscamos el usuario por email (en BBDD)
         UserModel user = userRepository.findByEmail(userRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -47,7 +47,12 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Devolvemos el Token junto al Id
-        return jwtService.generateToken(user.getId());
+        return jwtService.generateToken(user.getId());*/
+
+        return userRepository.findByEmail(userRequest.getEmail())
+                .filter(user -> passwordEncoder.matches(userRequest.getPassword(), user.getPassword()))
+                .map(user -> jwtService.generateToken(user.getId()))
+                .orElseThrow(() -> new RuntimeException("Invalid Credentials"));
     }
 
     private UserModel mapToEntity(UserRequest userRequest) {

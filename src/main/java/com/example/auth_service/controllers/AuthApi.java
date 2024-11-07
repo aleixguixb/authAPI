@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE + ApiPathConstants.LOGIN_ROUTE)
+@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE) // + ApiPathConstants.LOGIN_ROUTE)
 public interface AuthApi {
     @PostMapping(value = "/register")
     ResponseEntity<TokenResponse> createUser(@Valid @RequestBody UserRequest userRequest);
