@@ -28,16 +28,21 @@ public class AuthServiceImpl implements AuthService {
         // Ciframos la password antes de almacenar el usuario en la BBDD
         userRequest.setPassword(passwordEncoder.encode(userRequest.getPassword()));
 
+        // Creamos el user y devolvemos el token junto al ID
         return Optional.of(userRequest)
                 .map(this::mapToEntity)
                 .map(userRepository::save)
-                .map(userCreated -> jwtService.generateToken(userCreated.getId()))
+                .map(userCreated -> TokenResponse.builder()
+                        .accessToken(jwtService.generateToken(userCreated.getId()).getAccessToken())
+                        .userId(userCreated.getId()) // ID user
+                        .build()
+                )
                 .orElseThrow(() -> new RuntimeException("User creation failed"));
     }
 
     @Override
     public TokenResponse loginUser(UserRequest userRequest) {
-        /*// Buscamos el usuario por email (en BBDD)
+        // Buscamos el usuario por email (en BBDD)
         UserModel user = userRepository.findByEmail(userRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -47,12 +52,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Devolvemos el Token junto al Id
-        return jwtService.generateToken(user.getId());*/
+        return TokenResponse.builder()
+            .accessToken(jwtService.generateToken(user.getId()).getAccessToken())
+            .userId(user.getId())
+            .build();
 
-        return userRepository.findByEmail(userRequest.getEmail())
+       /* return userRepository.findByEmail(userRequest.getEmail())
                 .filter(user -> passwordEncoder.matches(userRequest.getPassword(), user.getPassword()))
                 .map(user -> jwtService.generateToken(user.getId()))
-                .orElseThrow(() -> new RuntimeException("Invalid Credentials"));
+                .orElseThrow(() -> new RuntimeException("Invalid Credentials"));*/
     }
 
     private UserModel mapToEntity(UserRequest userRequest) {

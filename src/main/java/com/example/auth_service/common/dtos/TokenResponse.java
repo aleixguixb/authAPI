@@ -9,4 +9,5 @@ import lombok.*;
 @NoArgsConstructor
 public class TokenResponse {
     private String accessToken;
+    private Long userId; // Añadimos este value para la response
 }
