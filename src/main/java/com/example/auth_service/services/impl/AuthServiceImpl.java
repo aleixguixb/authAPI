@@ -6,6 +6,7 @@ import com.example.auth_service.common.entities.UserModel;
 import com.example.auth_service.repositories.UserRepository;
 import com.example.auth_service.services.AuthService;
 import com.example.auth_service.services.JwtService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -14,19 +15,39 @@ import java.util.Optional;
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthServiceImpl(UserRepository userRepository, JwtService jwtService) {
+    public AuthServiceImpl(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public TokenResponse createUser(UserRequest userRequest) {
+        // Ciframos la password antes de almacenar el usuario en la BBDD
+        userRequest.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+
         return Optional.of(userRequest)
                 .map(this::mapToEntity)
                 .map(userRepository::save)
                 .map(userCreated -> jwtService.generateToken(userCreated.getId()))
                 .orElseThrow(() -> new RuntimeException("User creation failed"));
+    }
+
+    @Override
+    public TokenResponse loginUser(UserRequest userRequest) {
+        // Buscamos el usuario por email (en BBDD)
+        UserModel user = userRepository.findByEmail(userRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Verifica la password
+        if (!passwordEncoder.matches(userRequest.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Wrong password");
+        }
+
+        // Devolvemos el Token junto al Id
+        return jwtService.generateToken(user.getId());
     }
 
     private UserModel mapToEntity(UserRequest userRequest) {
