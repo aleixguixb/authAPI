@@ -25,7 +25,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public TokenResponse createUser(UserRequest userRequest) {
-        // Ciframos la password antes de almacenar el usuario en la BBDD
+        /*// Ciframos la password antes de almacenar el usuario en la BBDD
         userRequest.setPassword(passwordEncoder.encode(userRequest.getPassword()));
 
         // Creamos el user y devolvemos el token junto al ID
@@ -37,12 +37,26 @@ public class AuthServiceImpl implements AuthService {
                         .userId(userCreated.getId()) // ID user
                         .build()
                 )
+                .orElseThrow(() -> new RuntimeException("User creation failed"));*/
+
+        return Optional.of(userRequest)
+                .map(user -> {
+                    // Ciframos la password antes de convertirlo a entidad
+                    user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+                    return user;
+                })
+                .map(this::mapToEntity)
+                .map(userRepository::save)
+                .map(userCreated -> TokenResponse.builder()
+                        .accessToken(jwtService.generateToken(userCreated.getId()).getAccessToken())
+                        .build()
+                )
                 .orElseThrow(() -> new RuntimeException("User creation failed"));
     }
 
     @Override
     public TokenResponse loginUser(UserRequest userRequest) {
-        // Buscamos el usuario por email (en BBDD)
+       /* // Buscamos el usuario por email (en BBDD)
         UserModel user = userRepository.findByEmail(userRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -55,12 +69,12 @@ public class AuthServiceImpl implements AuthService {
         return TokenResponse.builder()
             .accessToken(jwtService.generateToken(user.getId()).getAccessToken())
             .userId(user.getId())
-            .build();
+            .build();*/
 
-       /* return userRepository.findByEmail(userRequest.getEmail())
+       return userRepository.findByEmail(userRequest.getEmail())
                 .filter(user -> passwordEncoder.matches(userRequest.getPassword(), user.getPassword()))
                 .map(user -> jwtService.generateToken(user.getId()))
-                .orElseThrow(() -> new RuntimeException("Invalid Credentials"));*/
+                .orElseThrow(() -> new RuntimeException("Invalid Credentials"));
     }
 
     private UserModel mapToEntity(UserRequest userRequest) {
