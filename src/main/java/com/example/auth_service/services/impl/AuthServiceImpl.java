@@ -40,17 +40,15 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("User creation failed"));*/
 
         return Optional.of(userRequest)
-                .map(user -> {
+               /* .map(user -> {
                     // Ciframos la password antes de convertirlo a entidad
                     user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
                     return user;
-                })
+                })*/
+                // ciframos la password en el mapToEntity
                 .map(this::mapToEntity)
                 .map(userRepository::save)
-                .map(userCreated -> TokenResponse.builder()
-                        .accessToken(jwtService.generateToken(userCreated.getId()).getAccessToken())
-                        .build()
-                )
+                .map(userCreated -> jwtService.generateToken(userCreated.getId()))
                 .orElseThrow(() -> new RuntimeException("User creation failed"));
     }
 
@@ -80,7 +78,8 @@ public class AuthServiceImpl implements AuthService {
     private UserModel mapToEntity(UserRequest userRequest) {
         return UserModel.builder()
                 .email(userRequest.getEmail())
-                .password((userRequest.getPassword()))
+//                .password((userRequest.getPassword()))
+                .password(passwordEncoder.encode(userRequest.getPassword()))
                 .role("USER")
                 .build();
     }
